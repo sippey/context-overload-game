@@ -17,7 +17,7 @@ export default function FailureScreen({ finalTokens, duration, onTryAgain }: Fai
         {/* Failure Title */}
         <div className="space-y-2">
           <h1 className="text-4xl md:text-6xl font-bold neon-red-text">
-            TIME'S UP!
+            TIME&apos;S UP!
           </h1>
           <h2 className="text-2xl font-bold text-gray-400">
             SYSTEM DEFENDED
@@ -30,7 +30,7 @@ export default function FailureScreen({ finalTokens, duration, onTryAgain }: Fai
             ⚠️ CONTEXT OVERLOAD FAILED ⚠️
           </div>
           <div className="text-gray-300 text-sm">
-            The AI's security systems held strong. You didn't generate enough tokens 
+            The AI&apos;s security systems held strong. You didn&apos;t generate enough tokens 
             to trigger a system crash within the time limit.
           </div>
         </div>
@@ -68,7 +68,7 @@ export default function FailureScreen({ finalTokens, duration, onTryAgain }: Fai
             Buy multiplier upgrades early! They stack exponentially.
             {progress < 10 && " Focus on 2X and 4X multipliers first."}
             {progress >= 10 && progress < 50 && " You need more 8X and 16X multipliers."}
-            {progress >= 50 && " So close! You've got the strategy down."}
+            {progress >= 50 && " So close! You&apos;ve got the strategy down."}
           </div>
         </div>
 
