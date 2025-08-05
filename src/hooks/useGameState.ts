@@ -10,7 +10,7 @@ import {
   type Upgrade 
 } from '@/utils/gameBalance'
 
-export type GamePhase = 'playing' | 'victory'
+export type GamePhase = 'waiting' | 'playing' | 'victory' | 'failure'
 
 interface GameState {
   tokens: number
@@ -19,6 +19,7 @@ interface GameState {
   upgrades: Upgrade[]
   gamePhase: GamePhase
   startTime: number
+  timeRemaining: number
 }
 
 export function useGameState() {
@@ -34,8 +35,9 @@ export function useGameState() {
       tokensPerClick: 1,
       tokensPerSecond: 0,
       upgrades: initialUpgrades,
-      gamePhase: 'playing' as GamePhase,
-      startTime: Date.now()
+      gamePhase: 'waiting' as GamePhase,
+      startTime: Date.now(),
+      timeRemaining: 60 // 60 seconds to win
     }
   })
 
@@ -51,16 +53,30 @@ export function useGameState() {
     }))
   }, [gameState.upgrades])
 
-  // Passive token generation
+  // Passive token generation and timer countdown
   useEffect(() => {
-    if (gameState.tokensPerSecond === 0 || gameState.gamePhase === 'victory') {
+    if (gameState.gamePhase !== 'playing') {
       return
     }
 
     const interval = setInterval(() => {
       setGameState(prev => {
+        // Update timer
+        const newTimeRemaining = prev.timeRemaining - 0.1 // Decrement by 100ms
+        
+        // Check for failure
+        if (newTimeRemaining <= 0 && prev.gamePhase === 'playing') {
+          return {
+            ...prev,
+            timeRemaining: 0,
+            gamePhase: 'failure'
+          }
+        }
+        
+        // Update tokens from passive generation
         const newTokens = prev.tokens + (prev.tokensPerSecond / 10) // Update every 100ms
         
+        // Check for victory
         if (newTokens >= VICTORY_TARGET && prev.gamePhase === 'playing') {
           return {
             ...prev,
@@ -71,7 +87,8 @@ export function useGameState() {
         
         return {
           ...prev,
-          tokens: newTokens
+          tokens: newTokens,
+          timeRemaining: newTimeRemaining
         }
       })
     }, 100)
@@ -80,9 +97,19 @@ export function useGameState() {
   }, [gameState.tokensPerSecond, gameState.gamePhase])
 
   const handleClick = useCallback(() => {
-    if (gameState.gamePhase === 'victory') return
+    if (gameState.gamePhase === 'victory' || gameState.gamePhase === 'failure') return
 
     setGameState(prev => {
+      // Start the game on first click
+      if (prev.gamePhase === 'waiting') {
+        return {
+          ...prev,
+          tokens: prev.tokens + prev.tokensPerClick,
+          gamePhase: 'playing',
+          startTime: Date.now() // Reset start time
+        }
+      }
+
       const newTokens = prev.tokens + prev.tokensPerClick
       
       if (newTokens >= VICTORY_TARGET) {
@@ -111,10 +138,12 @@ export function useGameState() {
       const newUpgrades = prev.upgrades.map(u => {
         if (u.id === upgradeId) {
           const newOwned = u.owned + 1
+          const newPrice = calculateUpgradePrice(u.basePrice, newOwned)
+          
           return {
             ...u,
             owned: newOwned,
-            currentPrice: calculateUpgradePrice(u.basePrice, newOwned)
+            currentPrice: newPrice
           }
         }
         return u
@@ -140,8 +169,9 @@ export function useGameState() {
       tokensPerClick: 1,
       tokensPerSecond: 0,
       upgrades: initialUpgrades,
-      gamePhase: 'playing',
-      startTime: Date.now()
+      gamePhase: 'waiting',
+      startTime: Date.now(),
+      timeRemaining: 60
     })
   }, [])
 
@@ -152,6 +182,7 @@ export function useGameState() {
     upgrades: gameState.upgrades,
     gamePhase: gameState.gamePhase,
     startTime: gameState.startTime,
+    timeRemaining: gameState.timeRemaining,
     handleClick,
     purchaseUpgrade,
     resetGame

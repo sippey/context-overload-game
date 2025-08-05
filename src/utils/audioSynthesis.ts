@@ -33,18 +33,18 @@ export function playClickSound(volume: number = 0.1): void {
     oscillator.connect(gainNode)
     gainNode.connect(ctx.destination)
     
-    // Configure sound
-    oscillator.frequency.setValueAtTime(800, ctx.currentTime)
-    oscillator.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.1)
-    oscillator.type = 'square'
+    // Configure sound - subtle, low-tone click
+    oscillator.frequency.setValueAtTime(220, ctx.currentTime)
+    oscillator.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 0.08)
+    oscillator.type = 'sine'
     
     // Volume envelope
     gainNode.gain.setValueAtTime(0, ctx.currentTime)
     gainNode.gain.linearRampToValueAtTime(volume, ctx.currentTime + 0.01)
-    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1)
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08)
     
     oscillator.start(ctx.currentTime)
-    oscillator.stop(ctx.currentTime + 0.1)
+    oscillator.stop(ctx.currentTime + 0.08)
   } catch (e) {
     console.warn('Failed to play click sound:', e)
   }
@@ -148,6 +148,34 @@ export function playWarningSound(volume: number = 0.08): void {
     oscillator.stop(ctx.currentTime + 0.6)
   } catch (e) {
     console.warn('Failed to play warning sound:', e)
+  }
+}
+
+// Generate clock tick sound
+export function playTickSound(volume: number = 0.06): void {
+  const ctx = initializeAudio()
+  if (!ctx) return
+
+  try {
+    const oscillator = ctx.createOscillator()
+    const gainNode = ctx.createGain()
+    
+    oscillator.connect(gainNode)
+    gainNode.connect(ctx.destination)
+    
+    // Sharp, brief tick sound
+    oscillator.frequency.setValueAtTime(1200, ctx.currentTime)
+    oscillator.type = 'square'
+    
+    // Very brief envelope for crisp tick
+    gainNode.gain.setValueAtTime(0, ctx.currentTime)
+    gainNode.gain.linearRampToValueAtTime(volume, ctx.currentTime + 0.005)
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.02)
+    
+    oscillator.start(ctx.currentTime)
+    oscillator.stop(ctx.currentTime + 0.02)
+  } catch (e) {
+    console.warn('Failed to play tick sound:', e)
   }
 }
 

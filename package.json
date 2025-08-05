@@ -23,7 +23,6 @@
   },
   "homepage": "https://github.com/sippey/context-overload-game#readme",
   "dependencies": {
-    "@tailwindcss/postcss": "^4.1.11",
     "@types/node": "^24.2.0",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
@@ -34,7 +33,7 @@
     "postcss": "^8.5.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "tailwindcss": "^4.1.11",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5.9.2"
   }
 }

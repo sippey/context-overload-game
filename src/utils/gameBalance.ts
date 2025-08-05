@@ -5,8 +5,10 @@ export interface Upgrade {
   basePrice: number
   currentPrice: number
   owned: number
-  clickMultiplier: number
+  clickMultiplier: number // Now acts as a multiplier (2x, 4x, etc)
   passiveGeneration: number
+  enableHoldClick?: boolean // New field for hold-to-click upgrade
+  isMultiplier?: boolean // Indicates if this upgrade multiplies click value
 }
 
 export const VICTORY_TARGET = 1_000_000
@@ -14,83 +16,55 @@ export const VICTORY_TARGET = 1_000_000
 export const BASE_UPGRADES: Omit<Upgrade, 'currentPrice' | 'owned'>[] = [
   {
     id: 'repeat-query',
-    name: 'Repeat Query',
-    description: 'Send the same request multiple times',
-    basePrice: 50,
-    clickMultiplier: 1, // +1 tokens per click
-    passiveGeneration: 0
+    name: 'Repeat Query 2X',
+    description: 'Double your click power!',
+    basePrice: 30,
+    clickMultiplier: 2, // 2x multiplier
+    passiveGeneration: 0,
+    isMultiplier: true
   },
   {
-    id: 'add-context',
-    name: 'Add Context',
-    description: 'Include more context in each request',
-    basePrice: 200,
-    clickMultiplier: 3, // +3 additional tokens per click
-    passiveGeneration: 0
+    id: 'context-injection',
+    name: 'Context Bomb 4X',
+    description: 'Quadruple tokens with context overload!',
+    basePrice: 500,
+    clickMultiplier: 4, // 4x multiplier
+    passiveGeneration: 0,
+    isMultiplier: true
   },
   {
     id: 'auto-prompt',
     name: 'Auto-Prompt',
     description: 'Generate prompts automatically',
-    basePrice: 500,
+    basePrice: 1_000,
     clickMultiplier: 0,
-    passiveGeneration: 5 // 5 tokens/second
+    passiveGeneration: 100 // Increased for better balance
   },
   {
-    id: 'code-injection',
-    name: 'Code Injection',
-    description: 'Inject code snippets into prompts',
-    basePrice: 1_000,
-    clickMultiplier: 10, // +10 additional tokens per click
-    passiveGeneration: 0
+    id: 'recursive-loop',
+    name: 'Recursive Loop 8X',
+    description: 'Exponential token multiplication!',
+    basePrice: 5_000,
+    clickMultiplier: 8, // 8x multiplier
+    passiveGeneration: 0,
+    isMultiplier: true
   },
   {
     id: 'multi-threading',
     name: 'Multi-Threading',
     description: 'Process multiple requests simultaneously',
-    basePrice: 3_000,
-    clickMultiplier: 0,
-    passiveGeneration: 15 // +15 additional tokens/second
-  },
-  {
-    id: 'recursive-loops',
-    name: 'Recursive Loops',
-    description: 'Create self-referencing query loops',
     basePrice: 10_000,
-    clickMultiplier: 35, // +35 additional tokens per click
-    passiveGeneration: 0
-  },
-  {
-    id: 'memory-dump',
-    name: 'Memory Dump',
-    description: 'Force the AI to load massive datasets',
-    basePrice: 30_000,
     clickMultiplier: 0,
-    passiveGeneration: 80 // +80 additional tokens/second
-  },
-  {
-    id: 'stack-overflow',
-    name: 'Stack Overflow',
-    description: 'Cause recursive function overflows',
-    basePrice: 100_000,
-    clickMultiplier: 150, // +150 additional tokens per click
-    passiveGeneration: 0
+    passiveGeneration: 1_000 // Increased passive
   },
   {
     id: 'system-exploit',
-    name: 'System Exploit',
-    description: 'Exploit system vulnerabilities for max tokens',
-    basePrice: 300_000,
-    clickMultiplier: 800, // +800 additional tokens per click
-    passiveGeneration: 0
-  },
-  {
-    id: 'ddos-attack',
-    name: 'DDOS Attack',
-    description: 'Flood the system with requests',
-    basePrice: 600_000,
-    clickMultiplier: 0,
-    passiveGeneration: 1000 // +1000 additional tokens/second
+    name: 'System Exploit 16X',
+    description: 'Maximum token multiplication!',
+    basePrice: 50_000,
+    clickMultiplier: 16, // 16x multiplier
+    passiveGeneration: 5_000, // Also adds passive
+    isMultiplier: true
   }
 ]
 
@@ -99,15 +73,23 @@ export function calculateUpgradePrice(basePrice: number, owned: number): number 
 }
 
 export function calculateTokensPerClick(upgrades: Upgrade[]): number {
-  let total = 1 // Base click value
+  let baseValue = 1 // Base click value
+  let multiplier = 1 // Total multiplier
   
   upgrades.forEach(upgrade => {
-    if (upgrade.owned > 0) {
-      total += upgrade.clickMultiplier * upgrade.owned
+    if (upgrade.owned > 0 && upgrade.clickMultiplier > 0) {
+      if (upgrade.isMultiplier) {
+        // For multiplier upgrades, multiply the total
+        // Each purchase multiplies again (2x, 4x, 8x becomes 2x, then 2x*2x=4x if bought twice)
+        multiplier *= Math.pow(upgrade.clickMultiplier, upgrade.owned)
+      } else {
+        // For additive upgrades (if any remain), add to base
+        baseValue += upgrade.clickMultiplier * upgrade.owned
+      }
     }
   })
   
-  return total
+  return Math.floor(baseValue * multiplier)
 }
 
 export function calculateTokensPerSecond(upgrades: Upgrade[]): number {

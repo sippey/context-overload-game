@@ -47,52 +47,47 @@ export default function TokenCounter({ tokens, tokensPerSecond }: TokenCounterPr
   const progress = Math.min((tokens / 1_000_000) * 100, 100)
 
   return (
-    <div className="text-center space-y-4">
-      {/* Main Token Display */}
-      <div className={`text-6xl md:text-8xl font-bold transition-all duration-200 ${
-        isAnimating ? 'scale-110 neon-green-text' : 'neon-text'
-      }`}>
-        {formatNumber(Math.floor(displayTokens))}
+    <div className="space-y-2">
+      {/* Compact Token Display */}
+      <div className="flex items-center justify-between">
+        <div className={`text-3xl font-bold transition-all duration-200 ${
+          isAnimating ? 'scale-110 neon-green-text' : 'neon-text'
+        }`}>
+          {formatNumber(Math.floor(displayTokens))}
+        </div>
+        {tokensPerSecond > 0 && (
+          <div className="text-sm text-neon-green">
+            +{formatNumber(tokensPerSecond)}/sec
+          </div>
+        )}
       </div>
 
-      {/* Tokens Per Second */}
-      {tokensPerSecond > 0 && (
-        <div className="text-lg md:text-xl text-neon-green">
-          +{formatNumber(tokensPerSecond)} tokens/sec
-        </div>
-      )}
-
-      {/* Progress Bar */}
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-cyber-gray h-4 rounded-full overflow-hidden border border-neon-blue">
+      {/* Compact Progress Bar */}
+      <div className="relative">
+        <div className="bg-cyber-gray h-2 rounded-full overflow-hidden border border-neon-blue/50">
           <div 
             className="h-full bg-gradient-to-r from-neon-blue to-neon-green transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="flex justify-between text-sm mt-2 text-gray-400">
-          <span>0</span>
-          <span className="neon-text">TARGET: 1M TOKENS</span>
-          <span>1M</span>
-        </div>
       </div>
 
-      {/* System Status */}
-      <div className="text-sm md:text-base">
+      {/* Compact System Status */}
+      <div className="text-xs">
         {progress < 25 && (
-          <span className="text-neon-blue">SYSTEM STATUS: NORMAL</span>
+          <span className="text-neon-blue">SYSTEM: NORMAL</span>
         )}
         {progress >= 25 && progress < 50 && (
-          <span className="text-yellow-400">SYSTEM STATUS: ELEVATED LOAD</span>
+          <span className="text-yellow-400">SYSTEM: ELEVATED</span>
         )}
         {progress >= 50 && progress < 75 && (
-          <span className="text-orange-400">SYSTEM STATUS: HIGH LOAD WARNING</span>
+          <span className="text-orange-400">SYSTEM: WARNING</span>
         )}
         {progress >= 75 && progress < 95 && (
-          <span className="text-neon-red glitch-effect">SYSTEM STATUS: CRITICAL OVERLOAD</span>
+          <span className="text-neon-red glitch-effect">SYSTEM: CRITICAL</span>
         )}
         {progress >= 95 && (
-          <span className="text-neon-red glitch-effect animate-pulse">SYSTEM FAILURE IMMINENT</span>
+          <span className="text-neon-red glitch-effect animate-pulse">FAILURE IMMINENT</span>
         )}
       </div>
     </div>

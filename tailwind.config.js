@@ -5,21 +5,6 @@ module.exports = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  safelist: [
-    'bg-cyber-dark',
-    'bg-cyber-gray',
-    'text-neon-blue',
-    'text-neon-green',
-    'text-neon-red',
-    'border-neon-blue',
-    'border-neon-green',
-    'border-neon-red',
-    'neon-text',
-    'neon-green-text',
-    'neon-red-text',
-    'cyber-button',
-    'glitch-effect'
-  ],
   theme: {
     extend: {
       colors: {

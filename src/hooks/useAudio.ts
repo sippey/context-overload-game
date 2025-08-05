@@ -7,6 +7,7 @@ import {
   playGlitchSound, 
   playWarningSound, 
   playVictorySound,
+  playTickSound,
   initializeAudio
 } from '@/utils/audioSynthesis'
 
@@ -68,6 +69,12 @@ export function useAudio() {
     }
   }, [isEnabled, isInitialized, volume])
 
+  const playTick = useCallback(() => {
+    if (isEnabled && isInitialized) {
+      playTickSound(volume * 0.08)
+    }
+  }, [isEnabled, isInitialized, volume])
+
   const toggleAudio = useCallback(() => {
     if (!isInitialized) {
       const ctx = initializeAudio()
@@ -90,6 +97,7 @@ export function useAudio() {
     playPurchase,
     playGlitch,
     playWarning,
-    playVictory
+    playVictory,
+    playTick
   }
 }

@@ -42,15 +42,15 @@ export default function ClickButton({ onClick, tokensPerClick, disabled }: Click
   }
 
   return (
-    <div className="flex flex-col items-center space-y-4">
+    <div className="flex flex-col items-center gap-2">
       <div className="relative">
         {/* Main Click Button */}
         <button
           onClick={handleClick}
           disabled={disabled}
           className={`
-            relative w-32 h-32 md:w-48 md:h-48 rounded-full border-2 border-neon-blue
-            bg-cyber-gray text-neon-blue font-mono text-lg md:text-xl font-bold
+            relative w-28 h-28 rounded-full border-2 border-neon-blue
+            bg-cyber-gray text-neon-blue font-mono text-lg font-bold
             transition-all duration-150 select-none
             ${isClicked ? 'scale-95 bg-neon-blue text-cyber-dark' : 'hover:scale-105'}
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg hover:shadow-neon-blue/50'}
@@ -62,8 +62,8 @@ export default function ClickButton({ onClick, tokensPerClick, disabled }: Click
           }}
         >
           <div className="flex flex-col items-center">
-            <div className="text-xs md:text-sm mb-1">QUERY AI</div>
-            <div className="text-lg md:text-2xl">►</div>
+            <div className="text-xs">QUERY AI</div>
+            <div className="text-xl">►</div>
           </div>
         </button>
 
@@ -79,18 +79,18 @@ export default function ClickButton({ onClick, tokensPerClick, disabled }: Click
               animation: 'ping 0.6s cubic-bezier(0, 0, 0.2, 1) forwards'
             }}
           >
-            +{tokensPerClick}
+            +{formatNumber(tokensPerClick)}
           </div>
         ))}
       </div>
 
-      {/* Click Value Display */}
+      {/* Click Value Display - Compact */}
       <div className="text-center">
-        <div className="text-neon-green text-lg md:text-xl font-bold">
-          +{formatNumber(tokensPerClick)} tokens per click
+        <div className="text-neon-green text-sm font-bold">
+          +{formatNumber(tokensPerClick)}/click
         </div>
-        <div className="text-gray-400 text-sm">
-          Click the button to generate tokens
+        <div className="text-xs text-gray-400">
+          Click to generate tokens
         </div>
       </div>
     </div>

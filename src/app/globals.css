@@ -8,7 +8,8 @@
   }
   
   body {
-    @apply bg-cyber-dark text-neon-blue;
+    background-color: #0a0a0a;
+    color: #00f5ff;
     background-image: radial-gradient(rgba(0, 245, 255, 0.1) 1px, transparent 1px);
     background-size: 20px 20px;
   }
@@ -16,29 +17,40 @@
 
 @layer components {
   .neon-text {
-    @apply text-neon-blue;
+    color: #00f5ff;
     text-shadow: 0 0 5px #00f5ff, 0 0 10px #00f5ff, 0 0 20px #00f5ff;
   }
   
   .neon-green-text {
-    @apply text-neon-green;
+    color: #00ff41;
     text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 20px #00ff41;
   }
   
   .neon-red-text {
-    @apply text-neon-red;
+    color: #ff0040;
     text-shadow: 0 0 5px #ff0040, 0 0 10px #ff0040, 0 0 20px #ff0040;
   }
   
   .cyber-button {
-    @apply bg-cyber-gray border border-neon-blue text-neon-blue font-mono px-4 py-2 rounded-none;
-    @apply hover:bg-neon-blue hover:text-cyber-dark transition-all duration-200;
-    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-cyber-gray disabled:hover:text-neon-blue;
+    background-color: #1a1a1a;
+    border: 1px solid #00f5ff;
+    color: #00f5ff;
+    font-family: Monaco, Consolas, monospace;
+    padding: 0.5rem 1rem;
+    border-radius: 0;
     text-shadow: 0 0 5px #00f5ff;
+    transition: all 0.2s;
   }
   
   .cyber-button:hover:not(:disabled) {
+    background-color: #00f5ff;
+    color: #0a0a0a;
     box-shadow: 0 0 10px #00f5ff, inset 0 0 10px rgba(0, 245, 255, 0.2);
+  }
+  
+  .cyber-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
   
   .glitch-effect {
