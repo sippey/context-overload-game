@@ -20,9 +20,11 @@ interface GameState {
   gamePhase: GamePhase
   startTime: number
   timeRemaining: number
+  lastSanityDecrease: number
+  sanity: number
 }
 
-export function useGameState() {
+export function useGameState(defaultSanity: number = 100) {
   const [gameState, setGameState] = useState<GameState>(() => {
     const initialUpgrades: Upgrade[] = BASE_UPGRADES.map(upgrade => ({
       ...upgrade,
@@ -37,7 +39,9 @@ export function useGameState() {
       upgrades: initialUpgrades,
       gamePhase: 'waiting' as GamePhase,
       startTime: Date.now(),
-      timeRemaining: 60 // 60 seconds to win
+      timeRemaining: 60, // 60 seconds to win
+      lastSanityDecrease: Date.now(), // Track last sanity decrease
+      sanity: defaultSanity // Start with provided sanity
     }
   })
 
@@ -53,7 +57,7 @@ export function useGameState() {
     }))
   }, [gameState.upgrades])
 
-  // Passive token generation and timer countdown
+  // Passive token generation, timer countdown, and sanity decrease
   useEffect(() => {
     if (gameState.gamePhase !== 'playing') {
       return
@@ -85,10 +89,23 @@ export function useGameState() {
           }
         }
         
+        // Check if we should decrease sanity (every 2 seconds)
+        const now = Date.now()
+        const timeSinceLastDecrease = now - prev.lastSanityDecrease
+        let newSanity = prev.sanity
+        let newLastSanityDecrease = prev.lastSanityDecrease
+        
+        if (timeSinceLastDecrease >= 2000) {
+          newSanity = Math.max(0, prev.sanity - 1) // Decrease by 1, minimum 0
+          newLastSanityDecrease = now
+        }
+        
         return {
           ...prev,
           tokens: newTokens,
-          timeRemaining: newTimeRemaining
+          timeRemaining: newTimeRemaining,
+          sanity: newSanity,
+          lastSanityDecrease: newLastSanityDecrease
         }
       })
     }, 100)
@@ -106,7 +123,9 @@ export function useGameState() {
           ...prev,
           tokens: prev.tokens + prev.tokensPerClick,
           gamePhase: 'playing',
-          startTime: Date.now() // Reset start time
+          startTime: Date.now(), // Reset start time
+          lastSanityDecrease: Date.now() // Reset sanity decrease timer
+          // Don't reset sanity here - keep the initial value
         }
       }
 
@@ -164,15 +183,31 @@ export function useGameState() {
       owned: 0
     }))
 
-    setGameState({
+    setGameState(prev => ({
       tokens: 0,
       tokensPerClick: 1,
       tokensPerSecond: 0,
       upgrades: initialUpgrades,
       gamePhase: 'waiting',
       startTime: Date.now(),
-      timeRemaining: 60
-    })
+      timeRemaining: 60,
+      lastSanityDecrease: Date.now(),
+      sanity: prev.sanity // Keep the current sanity value when resetting
+    }))
+  }, [])
+
+  const updateLastSanityDecrease = useCallback(() => {
+    setGameState(prev => ({
+      ...prev,
+      lastSanityDecrease: Date.now()
+    }))
+  }, [])
+
+  const setSanity = useCallback((newSanity: number) => {
+    setGameState(prev => ({
+      ...prev,
+      sanity: newSanity
+    }))
   }, [])
 
   return {
@@ -183,8 +218,12 @@ export function useGameState() {
     gamePhase: gameState.gamePhase,
     startTime: gameState.startTime,
     timeRemaining: gameState.timeRemaining,
+    lastSanityDecrease: gameState.lastSanityDecrease,
+    sanity: gameState.sanity,
     handleClick,
     purchaseUpgrade,
-    resetGame
+    resetGame,
+    updateLastSanityDecrease,
+    setSanity
   }
 }

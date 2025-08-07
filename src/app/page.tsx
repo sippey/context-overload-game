@@ -9,8 +9,20 @@ import VictoryScreen from '@/components/VictoryScreen'
 import FailureScreen from '@/components/FailureScreen'
 import { useGameState } from '@/hooks/useGameState'
 import { useAudio } from '@/hooks/useAudio'
+import { useIframeCommunication } from '@/hooks/useIframeCommunication'
 
 export default function Home() {
+  const {
+    isInIframe,
+    isInitialized,
+    currentSanity,
+    gameId,
+    difficulty,
+    variant,
+    sendSanityChange,
+    sendGameComplete
+  } = useIframeCommunication()
+
   const {
     tokens,
     tokensPerClick,
@@ -19,10 +31,14 @@ export default function Home() {
     gamePhase,
     startTime,
     timeRemaining,
+    lastSanityDecrease,
+    sanity,
     handleClick,
     purchaseUpgrade,
-    resetGame
-  } = useGameState()
+    resetGame,
+    updateLastSanityDecrease,
+    setSanity
+  } = useGameState(100) // Always start with 100, we'll update it when iframe initializes
 
   const {
     isEnabled: audioEnabled,
@@ -68,12 +84,44 @@ export default function Home() {
     }
   }, [tokens, playGlitch, playWarning])
 
-  // Play victory sound
+  // Play victory sound and send completion message
   useEffect(() => {
     if (gamePhase === 'victory') {
       playVictory()
+      // Send game complete message to parent if in iframe
+      if (isInIframe) {
+        sendGameComplete(true, `Completed in ${Math.round((Date.now() - startTime) / 1000)} seconds`)
+      }
+    } else if (gamePhase === 'failure') {
+      // Send failure message to parent if in iframe
+      if (isInIframe) {
+        sendGameComplete(false, `Failed with ${Math.floor(tokens)} tokens`)
+      }
     }
-  }, [gamePhase, playVictory])
+  }, [gamePhase, playVictory, isInIframe, sendGameComplete, startTime, tokens])
+
+  // Update sanity when iframe initializes
+  const hasInitializedSanity = useRef(false)
+  const lastSentSanityRef = useRef<number | null>(null)
+  
+  useEffect(() => {
+    if (isInIframe && isInitialized && !hasInitializedSanity.current) {
+      console.log('Setting initial sanity from iframe:', currentSanity)
+      setSanity(currentSanity)
+      lastSentSanityRef.current = currentSanity // Initialize the last sent ref with the iframe value
+      hasInitializedSanity.current = true
+    }
+  }, [isInIframe, isInitialized, currentSanity, setSanity])
+
+  // Send sanity changes to parent when in iframe
+  useEffect(() => {
+    if (isInIframe && lastSentSanityRef.current !== null && sanity !== lastSentSanityRef.current) {
+      const delta = sanity - lastSentSanityRef.current
+      console.log('[Sanity Change] Sending delta:', delta, 'from', lastSentSanityRef.current, 'to', sanity)
+      sendSanityChange(delta)
+    }
+    lastSentSanityRef.current = sanity
+  }, [sanity, isInIframe, sendSanityChange])
 
   // Play clock ticking sound during countdown
   const lastSecondRef = useRef<number | null>(null)
@@ -119,6 +167,17 @@ export default function Home() {
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold neon-text">TOKEN OVERLOAD</h1>
           <span className="text-xs text-gray-400">TARGET: 1M TOKENS</span>
+          {/* Show sanity indicator */}
+          <div className="flex items-center gap-2 px-3 py-1 border border-neon-blue/30 rounded">
+            <span className="text-xs text-gray-400">SANITY:</span>
+            <span className={`text-sm font-mono font-bold ${
+              sanity <= 20 ? 'text-red-400 animate-pulse neon-red-text' : 
+              sanity <= 50 ? 'text-orange-400' : 
+              'text-green-400 neon-green-text'
+            }`}>
+              {sanity}%
+            </span>
+          </div>
         </div>
         
         <div className="flex items-center gap-6">

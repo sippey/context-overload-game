@@ -29,7 +29,6 @@ export default function VictoryScreen({ finalTokens, duration, onPlayAgain }: Vi
           </div>
           <div className="text-gray-300 text-sm">
             The AI security system has been successfully overloaded!
-            The victim has been freed from the digital prison.
           </div>
         </div>
 

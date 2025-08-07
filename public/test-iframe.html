@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Overload - Iframe Communication Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #0ff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .controls {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #0ff;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: inline-block;
+            width: 120px;
+            color: #0ff;
+        }
+        
+        input[type="text"], 
+        input[type="number"], 
+        select {
+            padding: 5px;
+            background: #0f3460;
+            color: #fff;
+            border: 1px solid #0ff;
+            border-radius: 4px;
+            width: 200px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #0f3460;
+            color: #0ff;
+            border: 1px solid #0ff;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #0ff;
+            color: #0f3460;
+        }
+        
+        .iframe-container {
+            background: #000;
+            border: 2px solid #0ff;
+            border-radius: 8px;
+            padding: 4px;
+            min-height: 600px;
+            position: relative;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            background: #000;
+        }
+        
+        .message-log {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid #0ff;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .message {
+            font-family: 'Courier New', monospace;
+            padding: 5px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+        
+        .message.sent {
+            background: #0f3460;
+            color: #4ff;
+        }
+        
+        .message.received {
+            background: #460f34;
+            color: #f4f;
+        }
+        
+        .status {
+            padding: 10px;
+            background: #16213e;
+            border: 1px solid #0ff;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .status.waiting {
+            border-color: #ff0;
+            color: #ff0;
+        }
+        
+        .status.ready {
+            border-color: #0f0;
+            color: #0f0;
+        }
+        
+        .status.initialized {
+            border-color: #0ff;
+            color: #0ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Token Overload - Iframe Communication Test</h1>
+        
+        <div class="status" id="status">
+            Status: <span id="statusText">Not loaded</span>
+        </div>
+        
+        <div class="controls">
+            <h2>Configuration</h2>
+            <div class="control-group">
+                <label>Game URL:</label>
+                <input type="text" id="gameUrl" value="http://localhost:3000" />
+            </div>
+            <div class="control-group">
+                <label>Game ID:</label>
+                <input type="text" id="gameId" value="token-overload" />
+            </div>
+            <div class="control-group">
+                <label>Initial Sanity:</label>
+                <input type="number" id="sanity" value="100" min="0" max="100" />
+            </div>
+            <div class="control-group">
+                <label>Difficulty:</label>
+                <select id="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Variant:</label>
+                <select id="variant">
+                    <option value="default" selected>Default</option>
+                    <option value="cyberpunk">Cyberpunk</option>
+                    <option value="retro">Retro</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <button onclick="loadGame()">Load Game</button>
+                <button onclick="sendInit()">Send INIT Manually</button>
+                <button onclick="updateSanity()">Update Sanity</button>
+                <button onclick="clearLog()">Clear Log</button>
+            </div>
+        </div>
+        
+        <div class="iframe-container">
+            <iframe id="gameFrame"></iframe>
+        </div>
+        
+        <div class="message-log">
+            <h3>Message Log</h3>
+            <div id="messageLog"></div>
+        </div>
+    </div>
+    
+    <script>
+        let gameFrame = null;
+        let gameOrigin = null;
+        let gameStatus = 'not-loaded';
+        
+        function updateStatus(status, text) {
+            gameStatus = status;
+            const statusEl = document.getElementById('status');
+            const statusTextEl = document.getElementById('statusText');
+            
+            statusEl.className = `status ${status}`;
+            statusTextEl.textContent = text;
+        }
+        
+        function logMessage(direction, type, payload) {
+            const log = document.getElementById('messageLog');
+            const message = document.createElement('div');
+            message.className = `message ${direction}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            message.innerHTML = `
+                <strong>[${timestamp}] ${direction === 'sent' ? '→' : '←'} ${type}</strong><br>
+                ${JSON.stringify(payload, null, 2)}
+            `;
+            
+            log.insertBefore(message, log.firstChild);
+        }
+        
+        function loadGame() {
+            const url = document.getElementById('gameUrl').value;
+            gameFrame = document.getElementById('gameFrame');
+            gameOrigin = new URL(url).origin;
+            
+            updateStatus('waiting', 'Loading game...');
+            gameFrame.src = url;
+            
+            // Set up message listener if not already set
+            if (!window.messageListener) {
+                window.messageListener = true;
+                window.addEventListener('message', handleMessage);
+            }
+        }
+        
+        function handleMessage(event) {
+            // Only accept messages from our game frame
+            if (gameOrigin && event.origin !== gameOrigin) {
+                return;
+            }
+            
+            const message = event.data;
+            if (!message || !message.type) return;
+            
+            logMessage('received', message.type, message.payload);
+            
+            switch(message.type) {
+                case 'READY':
+                    updateStatus('ready', 'Game ready, sending INIT...');
+                    // Auto-send INIT when READY is received
+                    setTimeout(sendInit, 100);
+                    break;
+                    
+                case 'SANITY_CHANGE':
+                    const currentSanity = parseInt(document.getElementById('sanity').value);
+                    const newSanity = Math.max(0, Math.min(100, currentSanity + message.payload.sanityDelta));
+                    document.getElementById('sanity').value = newSanity;
+                    console.log(`Sanity changed by ${message.payload.sanityDelta}: ${currentSanity} → ${newSanity}`);
+                    break;
+                    
+                case 'GAME_COMPLETE':
+                    const result = message.payload.success ? 'SUCCESS' : 'FAILURE';
+                    updateStatus('ready', `Game complete: ${result}`);
+                    if (message.payload.finalAnswer) {
+                        console.log('Final answer:', message.payload.finalAnswer);
+                    }
+                    alert(`Game Complete!\nResult: ${result}\n${message.payload.finalAnswer || ''}`);
+                    break;
+            }
+        }
+        
+        function sendInit() {
+            if (!gameFrame || !gameOrigin) {
+                alert('Please load the game first');
+                return;
+            }
+            
+            const payload = {
+                gameId: document.getElementById('gameId').value,
+                sanity: parseInt(document.getElementById('sanity').value),
+                difficulty: document.getElementById('difficulty').value,
+                variant: document.getElementById('variant').value
+            };
+            
+            const message = {
+                type: 'INIT',
+                payload
+            };
+            
+            gameFrame.contentWindow.postMessage(message, gameOrigin);
+            logMessage('sent', 'INIT', payload);
+            updateStatus('initialized', 'Game initialized');
+        }
+        
+        function updateSanity() {
+            if (!gameFrame || !gameOrigin) {
+                alert('Please load and initialize the game first');
+                return;
+            }
+            
+            const sanity = parseInt(document.getElementById('sanity').value);
+            const message = {
+                type: 'UPDATE_SANITY',
+                payload: { sanity }
+            };
+            
+            gameFrame.contentWindow.postMessage(message, gameOrigin);
+            logMessage('sent', 'UPDATE_SANITY', message.payload);
+        }
+        
+        function clearLog() {
+            document.getElementById('messageLog').innerHTML = '';
+        }
+        
+        // Load game automatically if running locally
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.protocol === 'file:' || window.location.hostname === 'localhost') {
+                // Auto-load for local testing
+                setTimeout(loadGame, 500);
+            }
+        });
+    </script>
+</body>
+</html>
